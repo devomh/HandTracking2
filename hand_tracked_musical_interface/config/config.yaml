@@ -1,0 +1,29 @@
+fullscreen: true
+resolution: [1280, 720]
+
+audio_mode: midi # midi, direct, both
+midi_output_port: "IAC Driver Bus 1"
+synth_type: "sine" # For direct audio mode: e.g., sine, square, sample_based
+
+midi_channel_range: [2, 16] # MPE channels (channel 1 is often global)
+pitch_bend_range: 1 # Semitones
+
+use_all_fingers: true # If false, might default to specific fingers (e.g., index only)
+
+starting_note: C4
+num_octaves: 2
+active_scale: null # e.g., "C Major Pentatonic", null for chromatic
+zone_labels: true
+zone_style: "block" # e.g., block, outline
+
+preset_scales:
+  - name: "C Major"
+    notes: ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5", "A5", "B5"]
+  - name: "C Major Pentatonic"
+    notes: ["C4", "D4", "E4", "G4", "A4", "C5", "D5", "E5", "G5", "A5"]
+  - name: "Blues Minor"
+    notes: ["C4", "Eb4", "F4", "Gb4", "G4", "Bb4", "C5", "Eb5", "F5", "Gb5", "G5", "Bb5"]
+
+show_hand_landmarks: true
+show_velocity_indicators: true # Visual feedback for Y-axis modulation
+highlight_active_zones: true
