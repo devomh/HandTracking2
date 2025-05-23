@@ -6,28 +6,38 @@ class HandDetector:
     """
     Detects hands in an image, extracts landmark positions, and determines finger states.
     """
-    def __init__(self,
-                 static_image_mode=False,
-                 max_num_hands=2,
-                 min_detection_confidence=0.5,
-                 min_tracking_confidence=0.5):
+    def __init__(self, config_manager=None, # Allow None for backward compatibility or direct param setting
+                 static_image_mode=None,
+                 max_num_hands=None,
+                 min_detection_confidence=None,
+                 min_tracking_confidence=None):
         """
         Initializes the HandDetector.
 
         Args:
-            static_image_mode (bool): Whether to treat input images as a batch of static
-                                      unrelated images or a video stream.
-            max_num_hands (int): Maximum number of hands to detect.
-            min_detection_confidence (float): Minimum confidence value ([0.0, 1.0]) for
-                                             hand detection to be considered successful.
-            min_tracking_confidence (float): Minimum confidence value ([0.0, 1.0]) for
-                                             the hand landmarks to be considered tracked successfully.
+            config_manager (ConfigManager, optional): Configuration manager instance.
+                                                      If provided, settings are read from config.
+            static_image_mode (bool, optional): Overrides config if provided.
+            max_num_hands (int, optional): Overrides config if provided.
+            min_detection_confidence (float, optional): Overrides config if provided.
+            min_tracking_confidence (float, optional): Overrides config if provided.
         """
-        self.static_image_mode = static_image_mode
-        self.max_num_hands = max_num_hands
-        self.min_detection_confidence = min_detection_confidence
-        self.min_tracking_confidence = min_tracking_confidence
+        if config_manager:
+            default_static_mode = config_manager.get_setting('hand_detector.static_image_mode', False)
+            default_max_hands = config_manager.get_setting('hand_detector.max_num_hands', 2)
+            default_min_detect_conf = config_manager.get_setting('hand_detector.min_detection_confidence', 0.5)
+            default_min_track_conf = config_manager.get_setting('hand_detector.min_tracking_confidence', 0.5)
+        else: # Defaults if no config manager
+            default_static_mode = False
+            default_max_hands = 2
+            default_min_detect_conf = 0.5
+            default_min_track_conf = 0.5
 
+        self.static_image_mode = static_image_mode if static_image_mode is not None else default_static_mode
+        self.max_num_hands = max_num_hands if max_num_hands is not None else default_max_hands
+        self.min_detection_confidence = min_detection_confidence if min_detection_confidence is not None else default_min_detect_conf
+        self.min_tracking_confidence = min_tracking_confidence if min_tracking_confidence is not None else default_min_track_conf
+        
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=self.static_image_mode,
@@ -37,6 +47,9 @@ class HandDetector:
         )
         self.mp_drawing = mp.solutions.drawing_utils
         self.results = None # To store the results from MediaPipe processing
+
+        # print(f"HandDetector initialized with: static_mode={self.static_image_mode}, max_hands={self.max_num_hands}, "
+        #       f"min_detect_conf={self.min_detection_confidence}, min_track_conf={self.min_tracking_confidence}")
 
         # Landmark indices for fingertips and other key points for finger state detection
         self.landmark_indices = {
@@ -327,7 +340,31 @@ if __name__ == '__main__':
         print("Cannot open camera")
         exit()
 
-    detector = HandDetector(max_num_hands=2, min_detection_confidence=0.7)
+    # Example of direct parameter setting (old way)
+    # detector = HandDetector(max_num_hands=2, min_detection_confidence=0.7)
+
+    # Example of using a mock config_manager for testing HandDetector standalone
+    class MockConfigManager:
+        def __init__(self, data): self.data = data
+        def get_setting(self, key, default=None):
+            parts = key.split('.')
+            val = self.data
+            try:
+                for p in parts: val = val[p]
+                return val
+            except KeyError: return default
+    
+    mock_hd_config = {
+        'hand_detector': {
+            'static_image_mode': False,
+            'max_num_hands': 1,
+            'min_detection_confidence': 0.6,
+            'min_tracking_confidence': 0.6
+        }
+    }
+    config_mgr_hd_test = MockConfigManager(mock_hd_config)
+    detector = HandDetector(config_manager=config_mgr_hd_test)
+
 
     while True:
         success, frame = cap.read()
